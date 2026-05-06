@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>ResumeCraft – Smart Resume Builder + Add More Section</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Root ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --accent: #1a4fa8;
+  --accent-light: #e8f0fd;
+  --bg: #f0f2f6;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --muted: #64748b;
+  --faint: #f8fafc;
+  --radius: 10px;
+  --font-body: 'DM Sans', sans-serif;
+  --font-serif: 'DM Serif Display', serif;
+}
+html, body { height: 100%; overflow: hidden; }
+body { font-family: var(--font-body); background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+
+/* Top Bar */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  z-index: 10;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.logo { font-family: var(--font-serif); font-size: 1.4rem; color: #1a1a2e; letter-spacing: -0.3px; }
+.logo span { color: var(--accent); }
+.topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.color-wrap { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.color-wrap input[type=color] { width: 34px; height: 28px; border: 1.5px solid var(--border); border-radius: 7px; cursor: pointer; padding: 2px; background: none; }
+
+/* Template Bar */
+.tbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.tbar-label { font-size: 12px; color: var(--muted); margin-right: 4px; }
+.tpl-btn {
+  padding: 5px 16px; border-radius: 20px;
+  border: 1.5px solid var(--border); background: transparent;
+  cursor: pointer; font-size: 12.5px; font-family: var(--font-body);
+  color: var(--muted); transition: all .15s;
+}
+.tpl-btn:hover { border-color: var(--accent); color: var(--accent); }
+.tpl-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* App Body – Responsive Layout */
+.app-body { display: flex; flex: 1; overflow: hidden; }
+
+/* Sidebar */
+.sidebar {
+  width: 380px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  transition: width 0.2s;
+}
+.steps { display: flex; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.step {
+  flex: 1; padding: 10px 4px; text-align: center;
+  font-size: 10.5px; font-weight: 600; cursor: pointer;
+  color: var(--muted); border-bottom: 2.5px solid transparent;
+  transition: all .15s; letter-spacing: .4px; text-transform: uppercase;
+  min-width: 70px;
+}
+.step.active { color: var(--accent); border-bottom-color: var(--accent); }
+.form-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
+
+/* Preview Panel */
+.preview-panel {
+  flex: 1; overflow-y: auto; background: #dde3ec;
+  padding: 30px; display: flex; justify-content: center; align-items: flex-start;
+}
+.resume-paper {
+  width: 710px; min-height: 1004px; background: white;
+  box-shadow: 0 12px 50px rgba(0,0,0,.2);
+  font-family: var(--font-body); transition: all .2s;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 980px) {
+  .sidebar { width: 340px; }
+  .preview-panel { padding: 20px; }
+  .resume-paper { width: 100%; max-width: 680px; }
+}
+@media (max-width: 800px) {
+  body { overflow: auto; }
+  html, body { height: auto; overflow-y: auto; }
+  .app-body { flex-direction: column; overflow: visible; }
+  .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: 60vh; }
+  .preview-panel { padding: 20px 16px; background: #dde3ec; }
+  .resume-paper { max-width: 100%; margin: 0 auto; }
+  .topbar { height: auto; padding: 8px 16px; }
+  .tbar { padding: 0 12px; }
+  .form-body { padding: 16px; }
+}
+@media (max-width: 560px) {
+  .step { font-size: 9px; padding: 8px 2px; min-width: 60px; }
+  .topbar-right .btn-outline, .topbar-right .btn-primary { padding: 5px 12px; font-size: 11px; }
+  .tpl-btn { padding: 4px 12px; font-size: 11px; }
+}
+
+/* Form Elements */
+.field { margin-bottom: 13px; }
+.field-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.field-row .field { flex: 1; min-width: 120px; }
+label.lbl { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 5px; }
+input.inp, textarea.inp, select.inp { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: var(--radius); font-size: 13.5px; font-family: var(--font-body); color: var(--text); background: var(--surface); outline: none; transition: border-color .15s; }
+input.inp:focus, textarea.inp:focus, select.inp:focus { border-color: var(--accent); }
+textarea.inp { resize: vertical; }
+.card { background: var(--faint); border: 1.5px solid #eaeff7; border-radius: 13px; padding: 14px; margin-bottom: 14px; position: relative; }
+.card-title { font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 12px; }
+.del-btn { position: absolute; top: 10px; right: 12px; background: none; border: none; cursor: pointer; color: #cbd5e1; font-size: 15px; line-height: 1; transition: color .15s; }
+.del-btn:hover { color: #ef4444; }
+.add-btn { width: 100%; padding: 9px; border: 1.5px dashed #cbd5e1; border-radius: var(--radius); background: transparent; cursor: pointer; font-size: 13px; color: var(--muted); font-family: var(--font-body); transition: all .15s; margin-top: 2px; }
+.add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.bullet-list { list-style: none; margin-bottom: 8px; }
+.bullet-item { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #334155; padding: 5px 0; border-bottom: 1px solid #f1f5f9; }
+.ai-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.ai-gen-btn { background: transparent; border: 1.5px solid var(--accent); color: var(--accent); padding: 4px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; font-family: var(--font-body); font-weight: 600; transition: all .15s; }
+.ai-gen-btn:hover { background: var(--accent); color: #fff; }
+.ai-box { background: linear-gradient(135deg, #f0f6ff, #faf5ff); border: 1.5px solid #c7d7f5; border-radius: 10px; padding: 10px; display: none; }
+.ai-box.visible { display: block; }
+.ai-bullet-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; font-size: 11.5px; color: #334155; padding: 5px 7px; border-radius: 6px; cursor: pointer; transition: background .1s; }
+.ai-bullet-row:hover { background: white; }
+.ai-plus { color: var(--accent); font-size: 16px; flex-shrink: 0; font-weight: 300; }
+.tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 36px; padding: 8px; background: var(--faint); border: 1.5px solid #eaeff7; border-radius: 10px; }
+.tag { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.tag.skill { background: #eff6ff; color: #1d4ed8; }
+.tag.lang { background: #f0fdf4; color: #15803d; }
+.tag button { background: none; border: none; cursor: pointer; font-size: 11px; opacity: .55; padding: 0; line-height: 1; }
+.tag button:hover { opacity: 1; }
+.tag-input-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.sec-separator { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 18px 0 10px; display: flex; align-items: center; gap: 8px; }
+.sec-separator::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.checkbox-row { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); margin-bottom: 10px; cursor: pointer; }
+.btn-primary { background: var(--accent); color: #fff; border: none; padding: 8px 18px; border-radius: 20px; cursor: pointer; font-size: 12.5px; font-weight: 600; font-family: var(--font-body); transition: opacity .15s; }
+.btn-primary:hover { opacity: .88; }
+.btn-outline { background: transparent; border: 1.5px solid var(--border); padding: 7px 14px; border-radius: 20px; cursor: pointer; font-size: 12.5px; font-family: var(--font-body); color: var(--muted); transition: all .15s; }
+.btn-outline:hover { border-color: #94a3b8; color: var(--text); }
+
+/* Resume Templates */
+.tpl-classic .r-header { text-align: center; padding: 36px 48px 22px; border-bottom: 3px solid var(--accent); }
+.tpl-classic .r-name { font-family: 'Libre Baskerville', serif; font-size: 28px; font-weight: 700; color: #1a1a2e; letter-spacing: -.5px; }
+.tpl-classic .r-title { font-size: 13px; color: var(--accent); font-weight: 600; margin-top: 5px; }
+.tpl-classic .r-contact { font-size: 11px; color: var(--muted); margin-top: 8px; display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 18px; }
+.tpl-classic .r-body { padding: 20px 48px 36px; }
+.tpl-modern { display: flex; flex-wrap: wrap; min-height: 1004px; }
+.tpl-modern .r-side { width: 224px; background: var(--accent); color: white; padding: 36px 20px; flex-shrink: 0; }
+.tpl-modern .r-avatar { width: 58px; height: 58px; border-radius: 50%; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; margin-bottom: 14px; }
+.tpl-modern .r-name { font-family: var(--font-serif); font-size: 19px; font-weight: 700; line-height: 1.2; }
+.tpl-modern .r-title { font-size: 10.5px; opacity: .8; margin-top: 5px; font-weight: 500; }
+.tpl-modern .side-section-title { font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; opacity: .6; border-bottom: 1px solid rgba(255,255,255,.25); padding-bottom: 4px; margin: 18px 0 9px; }
+.tpl-modern .side-item { font-size: 10.5px; opacity: .88; margin-bottom: 5px; word-break: break-all; }
+.tpl-modern .r-main { flex: 1; padding: 36px 30px; }
+.tpl-executive { padding: 50px 54px; font-family: 'Libre Baskerville', serif; }
+.tpl-executive .r-name { font-size: 34px; font-weight: 700; color: #1a1a2e; letter-spacing: -1px; text-align: center; }
+.tpl-executive .r-title { font-family: 'Source Sans 3', sans-serif; font-size: 12.5px; color: var(--accent); font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; text-align: center; margin-top: 8px; }
+.tpl-executive .r-rule { width: 56px; height: 3px; background: var(--accent); margin: 14px auto 14px; }
+.tpl-executive .r-contact { font-family: 'Source Sans 3', sans-serif; font-size: 11px; color: var(--muted); display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 20px; margin-bottom: 4px; }
+.r-section-title { font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 3px; margin: 16px 0 10px; }
+.r-exp { margin-bottom: 12px; }
+.r-exp-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+.r-job-title { font-size: 13.5px; font-weight: 700; color: #1e293b; }
+.r-company { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.r-dates { font-size: 11px; color: #94a3b8; white-space: nowrap; flex-shrink: 0; margin-left: 8px; }
+.r-bullets { padding-left: 16px; margin-top: 5px; }
+.r-bullets li { font-size: 12px; color: #334155; line-height: 1.55; margin-bottom: 3px; }
+.r-edu { display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 8px; }
+.r-edu-deg { font-size: 13px; font-weight: 700; color: #1e293b; }
+.r-edu-sub { font-size: 12px; color: var(--muted); }
+.r-edu-year { font-size: 11px; color: #94a3b8; margin-left: 8px; }
+.r-skill-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.r-skill-badge { font-size: 10.5px; padding: 3px 10px; border-radius: 12px; background: var(--accent-light); color: var(--accent); border: 1px solid rgba(26,79,168,.15); }
+.r-proj, .r-more-item { margin-bottom: 10px; }
+.r-proj-name, .r-more-title { font-size: 13px; font-weight: 700; color: #1e293b; }
+.r-proj-meta, .more-meta { font-size: 11px; color: #94a3b8; margin-left: 6px; }
+.r-more-desc { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+.r-summary { font-size: 12.5px; color: #334155; line-height: 1.65; }
+.r-lang-list { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.r-lang { font-size: 12px; color: var(--muted); }
+@media print { .topbar, .tbar, .sidebar { display: none; } .app-body { display: block; } .preview-panel { padding: 0; background: white; } .resume-paper { box-shadow: none; width: 100%; min-height: auto; } body { overflow: visible; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">Resume<span>Craft</span></div>
+  <div class="topbar-right">
+    <div class="color-wrap"><span>Color</span><input type="color" id="accentPicker" value="#1a4fa8"></div>
+    <button class="btn-outline" id="resetBtn">Reset</button>
+    <button class="btn-primary" onclick="window.print()">⬇ Download PDF</button>
+  </div>
+</div>
+
+<div class="tbar">
+  <span class="tbar-label">Template:</span>
+  <button class="tpl-btn" data-tpl="classic">Classic</button>
+  <button class="tpl-btn active" data-tpl="modern">Modern</button>
+  <button class="tpl-btn" data-tpl="executive">Executive</button>
+</div>
+
+<div class="app-body">
+  <div class="sidebar">
+    <div class="steps">
+      <div class="step active" data-step="contact">Contact</div>
+      <div class="step" data-step="experience">Experience</div>
+      <div class="step" data-step="education">Education</div>
+      <div class="step" data-step="skills">Skills</div>
+      <div class="step" data-step="projects">Projects</div>
+      <div class="step" data-step="addmore">➕ Add More</div>   <!-- NEW ADD MORE SECTION -->
+    </div>
+    <div class="form-body" id="formBody"></div>
+  </div>
+  <div class="preview-panel">
+    <div class="resume-paper" id="resumePaper"></div>
+  </div>
+</div>
+
+<script>
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DEFAULT = {
+  name: 'Alex Carter',
+  jobTitle: 'Senior Software Engineer',
+  email: 'alex@example.com',
+  phone: '+1 (555) 234-5678',
+  location: 'San Francisco, CA',
+  linkedin: 'linkedin.com/in/alexcarter',
+  summary: 'Results-driven software engineer with 7+ years building scalable distributed systems. Passionate about clean architecture and exceptional developer experience.',
+  experiences: [
+    { id: 'e1', company: 'TechCorp', title: 'Senior Software Engineer', city: 'San Francisco, CA', startM: 'Mar', startY: '2021', endM: '', endY: '', present: true, bullets: ['Architected microservices handling 10M+ daily requests, reducing latency by 40%', 'Mentored 5 junior engineers, improving team velocity by 30%'] },
+    { id: 'e2', company: 'StartupXYZ', title: 'Software Engineer', city: 'Remote', startM: 'Jun', startY: '2018', endM: 'Feb', endY: '2021', present: false, bullets: ['Built real-time Kafka pipelines processing 500 GB/day', 'Cut deployment cycles from 2 weeks to daily via CI/CD automation'] },
+  ],
+  educations: [ { id: 'd1', school: 'UC Berkeley', degree: 'B.S. Computer Science', city: 'Berkeley, CA', startY: '2014', endY: '2018', gpa: '3.8' } ],
+  skills: ['React','Node.js','Python','PostgreSQL','AWS','Docker','Kubernetes','TypeScript'],
+  projects: [ { id: 'p1', name: 'OpenMetrics', year: '2023', url: 'github.com/alexc/openmetrics', desc: 'Open-source observability dashboard with 1.2K GitHub stars' } ],
+  languages: ['English (Native)', 'Spanish (Conversational)'],
+  // ADD MORE SECTION: flexible custom entries (awards, volunteer, certifications, etc.)
+  additionalItems: [
+    { id: 'a1', title: 'Open Source Contributor', year: '2024', description: 'Regular contributor to Django REST framework and React core libraries.' },
+    { id: 'a2', title: 'Volunteer Mentor', year: '2023', description: 'Mentored 20+ students in web development through Code for Good program.' }
+  ]
+};
+
+let state = JSON.parse(JSON.stringify(DEFAULT));
+let currentTemplate = 'modern';
+let currentStep = 'contact';
+let accent = '#1a4fa8';
+let suggestingExpId = null;
+
+const AI_BULLETS = {
+  engineer: [ 'Architected scalable microservices handling 10M+ daily requests', 'Led migration to Kubernetes, cutting deployment time by 60%', 'Built real-time data pipelines using Kafka and Spark', 'Mentored 5 junior developers improving team velocity by 30%', 'Implemented CI/CD reducing release cycles from 2 weeks' ],
+  manager: [ 'Launched 3 product features driving 25% increase in user retention', 'Managed cross-functional team of 12 to ship app with 4.8-star rating', 'Defined roadmap aligned with $2M revenue target', 'Conducted 50+ user interviews to validate product-market fit', 'Reduced customer churn 18% through data-driven improvements' ],
+  default: [ 'Led cross-functional initiative resulting in 20% operational efficiency gain', 'Managed stakeholder relationships across 4 departments', 'Identified $500K cost-saving opportunity implemented in Q3', 'Presented quarterly reports to C-suite', 'Trained 8 new team members reducing ramp-up time' ]
+};
+
+function getBullets(title) { const t = (title || '').toLowerCase(); if (t.includes('engineer')||t.includes('developer')) return AI_BULLETS.engineer; if (t.includes('manager')||t.includes('product')) return AI_BULLETS.manager; return AI_BULLETS.default; }
+function uid() { return '_' + Math.random().toString(36).slice(2, 7); }
+function esc(s) { if (!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function setAccent(color) { accent = color; document.documentElement.style.setProperty('--accent', color); document.documentElement.style.setProperty('--accent-light', hexToLight(color)); renderPreview(); }
+function hexToLight(hex) { let r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16); return `rgba(${r},${g},${b},0.08)`; }
+
+function renderForm() {
+  const fb = document.getElementById('formBody');
+  if (currentStep === 'contact') fb.innerHTML = buildContactForm();
+  else if (currentStep === 'experience') fb.innerHTML = buildExpForm();
+  else if (currentStep === 'education') fb.innerHTML = buildEduForm();
+  else if (currentStep === 'skills') fb.innerHTML = buildSkillsForm();
+  else if (currentStep === 'projects') fb.innerHTML = buildProjForm();
+  else if (currentStep === 'addmore') fb.innerHTML = buildAddMoreForm();   // NEW
+  bindFormEvents();
+}
+function buildContactForm() { return `<div class="field"><label class="lbl">Full Name</label><input class="inp" id="f-name" value="${esc(state.name)}"></div><div class="field"><label class="lbl">Job Title</label><input class="inp" id="f-jobTitle" value="${esc(state.jobTitle)}"></div><div class="field-row"><div class="field"><label class="lbl">Email</label><input class="inp" id="f-email" value="${esc(state.email)}"></div><div class="field"><label class="lbl">Phone</label><input class="inp" id="f-phone" value="${esc(state.phone)}"></div></div><div class="field-row"><div class="field"><label class="lbl">Location</label><input class="inp" id="f-location" value="${esc(state.location)}"></div><div class="field"><label class="lbl">LinkedIn</label><input class="inp" id="f-linkedin" value="${esc(state.linkedin)}"></div></div><div class="field"><label class="lbl">Professional Summary</label><textarea class="inp" id="f-summary" rows="4">${esc(state.summary)}</textarea></div>`; }
+function monthOpts(selected) { return MONTHS.map(m => `<option${m===selected?' selected':''}>${m}</option>`).join(''); }
+function buildExpForm() { /* same as earlier but keep dynamic */ let html = '';
+  state.experiences.forEach((exp, idx) => { const endDisabled = exp.present ? 'disabled' : ''; const aiVisible = suggestingExpId === exp.id ? ' visible' : ''; const bullets = getBullets(exp.title || state.jobTitle);
+    html += `<div class="card" data-expid="${exp.id}"><div class="card-title">Position ${idx+1}</div><button class="del-btn" data-del-exp="${exp.id}">✕</button><div class="field-row"><div class="field"><label class="lbl">Employer</label><input class="inp exp-field" data-id="${exp.id}" data-key="company" value="${esc(exp.company)}"></div><div class="field"><label class="lbl">Job Title</label><input class="inp exp-field" data-id="${exp.id}" data-key="title" value="${esc(exp.title)}"></div></div><div class="field"><label class="lbl">City</label><input class="inp exp-field" data-id="${exp.id}" data-key="city" value="${esc(exp.city)}"></div><div class="field-row"><div class="field"><label class="lbl">Start</label><div style="display:flex;gap:5px"><select class="inp exp-field" data-id="${exp.id}" data-key="startM" style="flex:1">${monthOpts(exp.startM)}</select><input class="inp exp-field" data-id="${exp.id}" data-key="startY" value="${esc(exp.startY)}" style="flex:1"></div></div><div class="field"><label class="lbl">End</label><div style="display:flex;gap:5px"><select class="inp exp-field" data-id="${exp.id}" data-key="endM" style="flex:1" ${endDisabled}><option value="">Month</option>${monthOpts(exp.endM)}</select><input class="inp exp-field" data-id="${exp.id}" data-key="endY" value="${esc(exp.endY)}" ${endDisabled} style="flex:1"></div></div></div><label class="checkbox-row"><input type="checkbox" class="exp-present" data-id="${exp.id}"${exp.present?' checked':''}> Currently working here</label>${exp.bullets.length?`<ul class="bullet-list">${exp.bullets.map((b,i)=>`<li class="bullet-item"><span class="bul-dot">•</span><span class="bul-text">${esc(b)}</span><button class="bul-del" data-expid="${exp.id}" data-bidx="${i}">✕</button></li>`).join('')}</ul>`:''}<div class="ai-header"><span class="ai-section-label">✦ AI Suggestions</span><button class="ai-gen-btn" data-gen="${exp.id}">Generate</button></div><div class="ai-box${aiVisible}" id="ai-${exp.id}"><div class="ai-box-title">Pre-written examples</div>${bullets.map(b=>`<div class="ai-bullet-row" data-expid="${exp.id}" data-bullet="${esc(b)}"><span style="flex:1">${esc(b)}</span><span class="ai-plus">+</span></div>`).join('')}</div></div>`;
+  }); html += `<button class="add-btn" id="addExpBtn">+ Add experience</button>`; return html; }
+function buildEduForm() { let html = ''; state.educations.forEach((edu, idx) => { html += `<div class="card" data-eduid="${edu.id}"><div class="card-title">Education ${idx+1}</div><button class="del-btn" data-del-edu="${edu.id}">✕</button><div class="field"><label class="lbl">School</label><input class="inp edu-field" data-id="${edu.id}" data-key="school" value="${esc(edu.school)}"></div><div class="field-row"><div class="field"><label class="lbl">Degree</label><input class="inp edu-field" data-id="${edu.id}" data-key="degree" value="${esc(edu.degree)}"></div><div class="field"><label class="lbl">GPA</label><input class="inp edu-field" data-id="${edu.id}" data-key="gpa" value="${esc(edu.gpa)}"></div></div><div class="field-row"><div class="field"><label class="lbl">Start Year</label><input class="inp edu-field" data-id="${edu.id}" data-key="startY" value="${esc(edu.startY)}"></div><div class="field"><label class="lbl">End Year</label><input class="inp edu-field" data-id="${edu.id}" data-key="endY" value="${esc(edu.endY)}"></div></div><div class="field"><label class="lbl">City</label><input class="inp edu-field" data-id="${edu.id}" data-key="city" value="${esc(edu.city)}"></div></div>`; }); html += `<button class="add-btn" id="addEduBtn">+ Add education</button>`; return html; }
+function buildSkillsForm() { return `<div class="field"><label class="lbl">Technical Skills</label><div class="tags-wrap" id="skillTags">${state.skills.map((s,i)=>`<span class="tag skill">${esc(s)}<button data-del-skill="${i}">✕</button></span>`).join('')}</div><div class="tag-input-row"><input class="inp" id="skillInp" placeholder="Type a skill" style="flex:1"><button class="btn-primary" id="addSkillBtn">Add</button></div></div><div class="sec-separator">Languages</div><div class="field"><label class="lbl">Languages</label><div class="tags-wrap" id="langTags">${state.languages.map((l,i)=>`<span class="tag lang">${esc(l)}<button data-del-lang="${i}">✕</button></span>`).join('')}</div><div class="tag-input-row"><input class="inp" id="langInp" placeholder="e.g. Spanish" style="flex:1"><button class="btn-primary" id="addLangBtn">Add</button></div></div>`; }
+function buildProjForm() { let html = ''; state.projects.forEach((proj, idx) => { html += `<div class="card"><div class="card-title">Project ${idx+1}</div><button class="del-btn" data-del-proj="${proj.id}">✕</button><div class="field-row"><div class="field"><label class="lbl">Project Name</label><input class="inp proj-field" data-id="${proj.id}" data-key="name" value="${esc(proj.name)}"></div><div class="field" style="max-width:90px"><label class="lbl">Year</label><input class="inp proj-field" data-id="${proj.id}" data-key="year" value="${esc(proj.year)}"></div></div><div class="field"><label class="lbl">URL</label><input class="inp proj-field" data-id="${proj.id}" data-key="url" value="${esc(proj.url)}"></div><div class="field"><label class="lbl">Description</label><textarea class="inp proj-field" data-id="${proj.id}" data-key="desc" rows="2">${esc(proj.desc)}</textarea></div></div>`; }); html += `<button class="add-btn" id="addProjBtn">+ Add project</button>`; return html; }
+// NEW ADD MORE FORM
+function buildAddMoreForm() {
+  let html = `<div class="sec-separator">➕ Awards, Volunteer, Certifications or Custom</div>`;
+  state.additionalItems.forEach((item, idx) => {
+    html += `<div class="card"><div class="card-title">Item ${idx+1}</div><button class="del-btn" data-del-more="${item.id}">✕</button>
+      <div class="field-row"><div class="field"><label class="lbl">Title / Role</label><input class="inp more-field" data-id="${item.id}" data-key="title" value="${esc(item.title)}" placeholder="e.g., Open Source Award"></div>
+      <div class="field" style="max-width:100px"><label class="lbl">Year</label><input class="inp more-field" data-id="${item.id}" data-key="year" value="${esc(item.year)}" placeholder="2024"></div></div>
+      <div class="field"><label class="lbl">Description</label><textarea class="inp more-field" data-id="${item.id}" data-key="description" rows="2" placeholder="Describe this achievement or activity...">${esc(item.description)}</textarea></div></div>`;
+  });
+  html += `<button class="add-btn" id="addMoreBtn">+ Add another item</button>`;
+  return html;
+}
+function bindFormEvents() {
+  ['name','jobTitle','email','phone','location','linkedin','summary'].forEach(k => { const el = document.getElementById('f-'+k); if(el) el.addEventListener('input', () => { state[k] = el.value; renderPreview(); }); });
+  document.querySelectorAll('.exp-field').forEach(el => { el.addEventListener('input', () => { let exp = state.experiences.find(e=>e.id===el.dataset.id); if(exp) { exp[el.dataset.key] = el.value; renderPreview(); } }); });
+  document.querySelectorAll('.exp-present').forEach(el => { el.addEventListener('change', () => { let exp = state.experiences.find(e=>e.id===el.dataset.id); if(exp) { exp.present = el.checked; renderForm(); renderPreview(); } }); });
+  document.querySelectorAll('[data-del-exp]').forEach(btn => btn.addEventListener('click', () => { state.experiences = state.experiences.filter(e=>e.id!==btn.dataset.delExp); renderForm(); renderPreview(); }));
+  if(document.getElementById('addExpBtn')) document.getElementById('addExpBtn').addEventListener('click', () => { state.experiences.push({ id: uid(), company:'', title:'', city:'', startM:'Jan', startY:'2024', endM:'', endY:'', present:false, bullets:[] }); renderForm(); renderPreview(); });
+  document.querySelectorAll('.ai-gen-btn').forEach(btn => { btn.addEventListener('click', () => { let eid = btn.dataset.gen; suggestingExpId = suggestingExpId===eid ? null : eid; renderForm(); }); });
+  document.querySelectorAll('.ai-bullet-row').forEach(row => { row.addEventListener('click', () => { let exp = state.experiences.find(e=>e.id===row.dataset.expid); if(exp) { exp.bullets.push(row.dataset.bullet); renderForm(); renderPreview(); } }); });
+  document.querySelectorAll('.bul-del').forEach(btn => { btn.addEventListener('click', () => { let exp = state.experiences.find(e=>e.id===btn.dataset.expid); if(exp) { exp.bullets.splice(parseInt(btn.dataset.bidx),1); renderForm(); renderPreview(); } }); });
+  document.querySelectorAll('.edu-field').forEach(el => { el.addEventListener('input', () => { let edu = state.educations.find(e=>e.id===el.dataset.id); if(edu) edu[el.dataset.key] = el.value; renderPreview(); }); });
+  document.querySelectorAll('[data-del-edu]').forEach(btn => { btn.addEventListener('click', () => { state.educations = state.educations.filter(e=>e.id!==btn.dataset.delEdu); renderForm(); renderPreview(); }); });
+  if(document.getElementById('addEduBtn')) document.getElementById('addEduBtn').addEventListener('click', () => { state.educations.push({ id: uid(), school:'', degree:'', city:'', startY:'', endY:'', gpa:'' }); renderForm(); renderPreview(); });
+  const skillInp = document.getElementById('skillInp'), addSkill = () => { let v = skillInp?.value.trim(); if(v) { state.skills.push(v); skillInp.value=''; renderForm(); renderPreview(); } };
+  if(skillInp) { skillInp.addEventListener('keydown',e=>{if(e.key==='Enter') addSkill();}); if(document.getElementById('addSkillBtn')) document.getElementById('addSkillBtn').addEventListener('click',addSkill); }
+  document.querySelectorAll('[data-del-skill]').forEach(btn => { btn.addEventListener('click', () => { state.skills.splice(parseInt(btn.dataset.delSkill),1); renderForm(); renderPreview(); }); });
+  const langInp = document.getElementById('langInp'), addLang = () => { let v = langInp?.value.trim(); if(v) { state.languages.push(v); langInp.value=''; renderForm(); renderPreview(); } };
+  if(langInp) { langInp.addEventListener('keydown',e=>{if(e.key==='Enter') addLang();}); if(document.getElementById('addLangBtn')) document.getElementById('addLangBtn').addEventListener('click',addLang); }
+  document.querySelectorAll('[data-del-lang]').forEach(btn => { btn.addEventListener('click', () => { state.languages.splice(parseInt(btn.dataset.delLang),1); renderForm(); renderPreview(); }); });
+  document.querySelectorAll('.proj-field').forEach(el => { el.addEventListener('input', () => { let proj = state.projects.find(p=>p.id===el.dataset.id); if(proj) proj[el.dataset.key] = el.value; renderPreview(); }); });
+  document.querySelectorAll('[data-del-proj]').forEach(btn => { btn.addEventListener('click', () => { state.projects = state.projects.filter(p=>p.id!==btn.dataset.delProj); renderForm(); renderPreview(); }); });
+  if(document.getElementById('addProjBtn')) document.getElementById('addProjBtn').addEventListener('click', () => { state.projects.push({ id: uid(), name:'', year:'', url:'', desc:'' }); renderForm(); renderPreview(); });
+  // ADD MORE bindings
+  document.querySelectorAll('.more-field').forEach(el => { el.addEventListener('input', () => { let item = state.additionalItems.find(i=>i.id===el.dataset.id); if(item) item[el.dataset.key] = el.value; renderPreview(); }); });
+  document.querySelectorAll('[data-del-more]').forEach(btn => { btn.addEventListener('click', () => { state.additionalItems = state.additionalItems.filter(i=>i.id!==btn.dataset.delMore); renderForm(); renderPreview(); }); });
+  if(document.getElementById('addMoreBtn')) document.getElementById('addMoreBtn').addEventListener('click', () => { state.additionalItems.push({ id: uid(), title: '', year: '', description: '' }); renderForm(); renderPreview(); });
+}
+
+function expDate(exp) { const end = exp.present ? 'Present' : [exp.endM, exp.endY].filter(Boolean).join(' '); const start = [exp.startM, exp.startY].filter(Boolean).join(' '); return `${start}${end ? ' – ' + end : ''}`; }
+function renderExpHtml(exp) { return `<div class="r-exp"><div class="r-exp-head"><div><div class="r-job-title">${esc(exp.title)}</div><div class="r-company">${esc(exp.company)}${exp.city?' · '+esc(exp.city):''}</div></div><div class="r-dates">${expDate(exp)}</div></div>${exp.bullets.length?`<ul class="r-bullets">${exp.bullets.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`:''}</div>`; }
+function renderEduHtml(edu) { const yr = [edu.startY, edu.endY].filter(Boolean).join(' – '); return `<div class="r-edu"><div><div class="r-edu-deg">${esc(edu.degree)}</div><div class="r-edu-sub">${esc(edu.school)}${edu.city?' · '+esc(edu.city):''}${edu.gpa?' · GPA: '+esc(edu.gpa):''}</div></div><div class="r-edu-year">${yr}</div></div>`; }
+function renderProjHtml(proj) { return `<div class="r-proj"><div><span class="r-proj-name">${esc(proj.name)}</span>${proj.year?`<span class="r-proj-meta">${esc(proj.year)}</span>`:''} ${proj.url?`<span class="r-proj-url">${esc(proj.url)}</span>`:''}</div>${proj.desc?`<div class="r-proj-desc">${esc(proj.desc)}</div>`:''}</div>`; }
+function renderMoreHtml(item) { return `<div class="r-more-item"><div><span class="r-more-title">${esc(item.title)}</span>${item.year?`<span class="more-meta"> (${esc(item.year)})</span>`:''}</div>${item.description?`<div class="r-more-desc">${esc(item.description)}</div>`:''}</div>`; }
+function skillsHtml() { return `<div class="r-skill-tags">${state.skills.map(s=>`<span class="r-skill-badge">${esc(s)}</span>`).join('')}</div>`; }
+function langsHtml() { return `<div class="r-lang-list">${state.languages.map(l=>`<span class="r-lang">${esc(l)}</span>`).join('')}</div>`; }
+function sectionTitle(text) { return `<div class="r-section-title">${text}</div>`; }
+
+function renderPreview() {
+  const paper = document.getElementById('resumePaper');
+  const d = state;
+  const contacts = [d.email, d.phone, d.location, d.linkedin].filter(Boolean);
+  const initials = (d.name || '?').split(' ').map(w=>w[0]).slice(0,2).join('');
+  const moreHtml = d.additionalItems.length ? sectionTitle('Additional & Achievements') + d.additionalItems.map(renderMoreHtml).join('') : '';
+  if (currentTemplate === 'classic') {
+    paper.className = 'resume-paper tpl-classic';
+    paper.innerHTML = `<div class="r-header"><div class="r-name">${esc(d.name)}</div><div class="r-title">${esc(d.jobTitle)}</div><div class="r-contact">${contacts.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div><div class="r-body">${d.summary?sectionTitle('Summary')+`<div class="r-summary">${esc(d.summary)}</div>`:''}${d.experiences.length?sectionTitle('Experience')+d.experiences.map(renderExpHtml).join(''):''}${d.educations.length?sectionTitle('Education')+d.educations.map(renderEduHtml).join(''):''}${d.skills.length?sectionTitle('Skills')+skillsHtml():''}${d.projects.length?sectionTitle('Projects')+d.projects.map(renderProjHtml).join(''):''}${moreHtml}${d.languages.length?sectionTitle('Languages')+langsHtml():''}</div>`;
+  } else if (currentTemplate === 'modern') {
+    paper.className = 'resume-paper tpl-modern';
+    paper.innerHTML = `<div class="r-side"><div class="r-avatar">${esc(initials)}</div><div class="r-name">${esc(d.name)}</div><div class="r-title">${esc(d.jobTitle)}</div><div class="side-section-title">Contact</div>${contacts.map(c=>`<div class="side-item">${esc(c)}</div>`).join('')}${d.skills.length?`<div class="side-section-title">Skills</div>${d.skills.map(s=>`<div class="side-skill"><span class="side-dot"></span>${esc(s)}</div>`).join('')}`:''}${d.languages.length?`<div class="side-section-title">Languages</div>${d.languages.map(l=>`<div class="side-item">${esc(l)}</div>`).join('')}`:''}</div><div class="r-main">${d.summary?sectionTitle('Profile')+`<div class="r-summary">${esc(d.summary)}</div>`:''}${d.experiences.length?sectionTitle('Experience')+d.experiences.map(renderExpHtml).join(''):''}${d.educations.length?sectionTitle('Education')+d.educations.map(renderEduHtml).join(''):''}${d.projects.length?sectionTitle('Projects')+d.projects.map(renderProjHtml).join(''):''}${moreHtml}</div>`;
+  } else {
+    paper.className = 'resume-paper tpl-executive';
+    paper.innerHTML = `<div class="r-name">${esc(d.name)}</div><div class="r-title">${esc(d.jobTitle)}</div><div class="r-rule"></div><div class="r-contact">${contacts.map(c=>`<span>${esc(c)}</span>`).join('')}</div><div class="r-body">${d.summary?`<div style="margin:18px 0 4px;text-align:center;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Professional Summary</div><div class="r-summary" style="text-align:center">${esc(d.summary)}</div><div style="width:40px;height:1px;background:var(--border);margin:16px auto"></div>`:''}${d.experiences.length?sectionTitle('Professional Experience')+d.experiences.map(renderExpHtml).join(''):''}${d.educations.length?sectionTitle('Education')+d.educations.map(renderEduHtml).join(''):''}<div style="display:flex;gap:32px;flex-wrap:wrap">${d.skills.length?`<div style="flex:1">${sectionTitle('Skills')}${skillsHtml()}</div>`:''}${d.languages.length?`<div style="flex:1">${sectionTitle('Languages')}${langsHtml()}</div>`:''}</div>${d.projects.length?sectionTitle('Projects')+d.projects.map(renderProjHtml).join(''):''}${moreHtml}</div>`;
+  }
+}
+
+document.querySelectorAll('.step').forEach(el => { el.addEventListener('click', () => { document.querySelectorAll('.step').forEach(s=>s.classList.remove('active')); el.classList.add('active'); currentStep = el.dataset.step; suggestingExpId = null; renderForm(); }); });
+document.querySelectorAll('.tpl-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.tpl-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); currentTemplate = btn.dataset.tpl; renderPreview(); }); });
+document.getElementById('accentPicker').addEventListener('input', e => setAccent(e.target.value));
+document.getElementById('resetBtn').addEventListener('click', () => { if(confirm('Reset all data to defaults?')) { state = JSON.parse(JSON.stringify(DEFAULT)); suggestingExpId = null; renderForm(); renderPreview(); } });
+renderForm(); renderPreview();
+</script>
+</body>
+</html>
